@@ -1,5 +1,5 @@
 .section .data
-lista:		.int 1,2,10,  1,2,0b10,  1,2,0x10
+lista:		.int 1,2,10,  1,2,0b10,  1,2,0x10	# En este caso tiene un tamaño de 9 * 4 bytes = 4 * 64bits + 32 bits
 longlista:	.int   (.-lista)/4
 resultado:	.int   0
   formato: 	.asciz	"suma = %u = 0x%x hex\n"
@@ -22,38 +22,44 @@ _start: .global _start
 #	call acabar_C	# exit()    de libC
 	ret
 
+
+
 trabajar:
 	mov     $lista, %rbx
 	mov  longlista, %ecx
 	call suma		# == suma(&lista, longlista);
-	mov  %eax, resultado
+	mov  %eax, resultado # global resultado = local resultado
 	ret
+
+
 
 suma:
-	push     %rdx
-	mov  $0, %eax
-	mov  $0, %rdx
+	push     %rdx	# Guardo rdx
+	mov  $0, %eax	# suma = 0
+	mov  $0, %rdx	# i = 0
 bucle:
-	add  (%rbx,%rdx,4), %eax
-	inc   %rdx
-	cmp   %rdx,%rcx
-	jne    bucle
+	add  (%rbx,%rdx,4), %eax	# suma = (lista[i]) + suma
+	inc   %rdx					# i++
+	cmp   %rdx,%rcx				# i == tam_lista ? iguales=true : iguales=false	
+	jne    bucle				# if iguales == true, PC = goto 37
 
-	pop   %rdx
-	ret
+	pop   %rdx					# Saca rdx
+	ret							# Devuelve suma
+
+
 
 #imprim_C:			# requiere libC
 #	mov   $formato, %rdi
 #	mov   resultado,%esi
 #	mov   resultado,%edx
 #	mov          $0,%eax	# varargin sin xmm
-#	call  printf		# == printf(formato, res, res);
+#	call  printf			# == printf(formato, res, res);
 #	ret
 
 acabar_L:
-	mov        $60, %rax
-	mov  resultado, %edi
-	syscall			# == _exit(resultado)
+	mov        $60, %rax	# argv[0] = exit
+	mov  resultado, %edi	# argv[1] = resultado
+	syscall					# syscall argv[0] argv[1] (syscall exit resultado)
 	ret
 
 #acabar_C:			# requiere libC
