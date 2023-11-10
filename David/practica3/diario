@@ -1,0 +1,260 @@
+Convención de llamada SystemV AMD64 ABI
+
+
+Tenemos que modificar el ejercicio de suma.s para que cumpla con la
+convencion de llamada SystemV AMD64 ABI.
+
+
+
+
+Ej 1:
+
+Con p *(long*) $rsp vemos el numero de argumentos
+Con p *(long*) ($rsp+8) nos da la direccion de la siguiente posicion en la pila,
+ya que vamos avanzando de 8 en 8 bytes.
+
+Con x/8xg $rsp podemos ver el marco de pila entero.
+Muestra 4, el numero de argumentos, los 4 argumentos, y el null
+
+Con p *(char**) ($rsp+8) podemos leer la cadena del primer argumento, que es
+la ruta del programa.
+
+Modificando el 8 podemos leer los siguientes argumento. Sumando de 8 en 8 vamos
+recorriendo los argumentos.
+
+Pasando del 3er argumento, nos encontramos el null que ya hemos visto en 
+el marco de pila. Si nos pasamos encontramos las variables de entorno
+
+
+Ponemos br en suma, y si miramos el marco de pila, debajo del 4 encontramos la direción de retorno
+
+
+SEGUNDO EJERCICIO
+
+añadimos printf al ejercicio (da 37, 0x25)
+
+TERCER EJERCICIO
+
+encapsulamos la seccion de suma en una función en c, los compilamos y linkamos
+con el comando que nos proporcionan y los ejecutamos.
+
+(gdb -tui suma_03...)
+
+
+CUARTO EJERCICIO
+
+
+Dejamos solo los datos y el punto de entrada en ensmablador
+
+en gdb, hacemos breakpoint en la linea 22, unica linea de codigo, e imprimimos la direccion de 
+resultado y de longlista.
+
+Si hacemos si (stepi), y hacemos los mismos comandos, veremos que comparten direccion de memoria los datos
+
+si hacemos objdump -t suma_04_SC_c.o, salen los argumentos como externos y sin definir su
+dirección de memoria, pues vienen del otro fichero.
+
+si lo hacemos en el objeto de s, veremos que estan en data, son globales y si tienen su
+direccion definida.
+
+
+QUINTO EJERCICIO
+
+Lo primero que observamos es que mantiene la aritmética de etiquetas.
+tenemos un main donde se llama a suma y poco mas.
+
+SEXTO EJERCICIO
+
+Ahora solo tenemos en ensamblador la funcion suma.
+
+
+SÉPTIMO EJERCICIO, Ensamblador en-línea (inline assembly) con asm()
+
+permite tener codigo ensamblador en el archivo de c.
+
+Si generamos codigo ensamblador con esto, el compilador pega el trozo de
+codigo ensamblador nuestro en el codigo.
+
+
+OCTAVO EJERCICIO:
+
+reducimos el uso del asm a solo una linea del codigo, la de
+res += array[i];
+traducida a ensamblador y poniendo debajo lo que sería la
+especificación de los registros.
+
+Solo indicas su etiqueta, un "modificador" llamado restricción y de que
+tipo son. El compilador se encarga de asignar los registros segun
+la convención.
+
+EJERCICIO 9
+
+Vamos a comprobar cual de todas estas implementaciones es la más rapida
+Tenemos la version con todo en c, la version con solo una linea en asm, y
+la version con todo en asm.
+
+
+A partir de aquí la practica se basa en realizar esto mismo con otro tipo de 
+ejercicios como el population-count, la semana que viene.
+
+
+
+
+
+
+PRACTICA 3B
+
+TRABAJO A REALIZAR:
+
+Vamos a hacer distintas implementaciones de "population count".
+Probaremos con distintos tamaños de entrada cada uno y tomaremos 10 medidas
+haciendo la media para calcular la velocidad de cada implementacion
+
+
+4.1 Calcular la suma de bits de una lista de enteros sin signo
+
+Para el tamaño de las listas usaremos potencias de 2.
+
+Definiremos 4 tipos de listas.
+La 4ta lista será una lista de 2²⁰ bits. Para saber el numero de unos y ceros
+que habrá debemos tener en cuenta que tenemos 2²⁰/2 unos y ceros, si 20 es el
+numero de bits.
+
+De ahi deducimos que el numero de 1 que habrá será nbits(1 << (nbits-1)) en C
+
+
+
+
+#EL PRIMER POPCOUNT pcount_for
+#EL SEGUNDO POPCOUNT pcount_while
+
+Veremos como calcular los 1 en un único numero.
+Luego lo implementamos para un array de (unsigned long)
+con el que haremos las primeras pruebas de testeo del tiempo
+usando el script que hemos montado modificado de la practica anterior
+para ejecutar las distintas listas.
+
+Teóricamente, el popcount con un while tiene mejores prestaciones que el
+bucle for.
+
+
+#EL TERCER Y CUARTO POPCOUNT pcount_asm
+
+Vamos a reemplazar un trozo del código de C por ensamblador:
+popcount3:
+
+shr %[x] // por defecto desplaza a la derecha 1 bit
+adc $0, %[r]
+test %[x], %[x]
+jne ini3
+
+
+Para el popcount4 vamos a modificar un poco el ASM de popcount3
+
+shr no solo en via el ultimo bit al CF y mete un 0 por la izquierda,
+si no que hace un test %[y] %[y]
+
+Podemos aprovechar esto para eliminar algunas lineas, dejando shr y luego jnz 
+para aprovechar dicho test.
+
+El problema es que si hacemos shr y luego jnz, el ultimo bit de carry se pierde,
+pudiendo perder un 1, ya que la suma tendremos que hacerla despues del salto.
+
+Asi que tendremos que sumar posteriormente del jne el bit de carry para no 
+perderlo.
+Esto tambien nos obliga a limpiar el carry flag de primeras para no sumar un 1
+indeseado.
+
+	clc
+ini4:
+	adc $0, %[r]
+	shr %[x]
+	jne ini4
+	adc $0, %[r]
+	
+
+La mejora del popcount4 es de casi 10 veces
+	
+	
+#EL QUINTO POPCOUNT
+
+Vamos a seccionar el numero en sus bytes y contar en cada uno el numero de 1
+Asi solo tendremos que hacer 8 desplazamientos
+Por cada byte vamos haciendo la operación & para contar en otro numero de 32 bits
+cuantos 1 hay por cada byte. 
+
+EJ: 10101001 01110010 01111111 01101011 número
+	00000001 00000001 00000001 00000001 máscara
+ 	00000001 00000000 00000001 00000001 resultado del AND
+ 	
+ Ahi observamos que se guarda si hay un 1 o no en el bit menos significativo.
+ Estos resultados de AND se van sumando entre si, consiguiendo de esta forma
+ sumar los 1 que hay en cada byte.
+ 
+ Luego se van desplazando de 2 en 2 y luego de 1 en 1 para sumar en paralelo
+ dichos valores y obtener así el número total.
+
+#EL SEXTO POPCOUNT
+
+
+Queremos cargarnos el bucle interno linealizándolo. Es decir, queremos
+hacer esta suma directamente con un solo bucle.
+
+Para esto vamos a ir contando 1 de dos en dos bits. Luego contaremos pares de 1
+de cuatro en cuatro bits, y así hasta acabar, consiguiendo (de alguna manera que
+aun no entiendo), que se sumen la cantidad de unos.
+
+#EL SÉPTIMO POPCOUNT
+
+EN el séptimo popcount se busca hacer una especie de mejora mediante lectura
+de numeros más grandes (un bucle en factor 4x). De esta manera, se computa
+el número mas rápido.
+
+#EL OCTAVO POPCOUNT
+
+Es una versión de popcount de internet mediante una tabla de búsquedas, en la que
+cada número está almacenado junto a su número de 1 en binario.
+
+El bucle busca este valor y los suma.
+
+#EL NOVENO Y DECIMO POPCOUNT
+
+Son basicamente la versión de la instrucción popcnt de ensamblador.
+Con esto buscamos ver si todas las implementaciones que hemos
+realizado hasta ahora superan a lo que se podría llamar la
+"versión oficial". 
+
+Al menos, antes de la implementación del 10 pero tras hacer la del 9 ya
+observamos que la 9 es rápida pero menos que la 8. Aún así es la segunda
+más rapida hasta ahora.
+
+El 10 es un desenrollo del bucle como la versión de wikipedia que vimos antes.
+El cuerpo del bucle es basicamente dos popcnt.
+Trabajamos sobre el dato mediante dos seudo-castings para indicar que
+me coloque correctamente el número.
+
+Tras implementar el 10, vemos que es el más rápido de todos.
+
+
+
+
+Por ultimo solo queda utilizar el excel para realizar las comparaciones de
+velocidad
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,54 @@
+# Practica 4, Ejercicio 1: evitar las comprobaciones´
+
+
+objdump -d bomba
+
+# Ahorrarse teclear estas instrucciones cada vez
+# que se empieza a depurar el programa bomba
+
+
+# Debido al nombre de fichero "bomba-gdb.gdb"
+# se carga automaticamente al ejecutar "gdb bomba"
+
+layout asm
+layout regs
+br main
+run
+
+
+  40120d:	74 05                	je     401214 <main+0x5e>
+  40122e:	7e 05                	jle    401235 <main+0x7f>
+  40127c:	74 05                	je     401283 <main+0xcd>
+  40129f:	7e 05                	jle    4012a6 <main+0xf0>
+  
+  
+  
+  
+  gdb
+  set write on
+  file bomba
+  x/i 0x40120d -> miro si he extraido correctamente las direcciones
+  x/i 0x40127c
+  
+  set *(char*)0x40120d=0xeb
+  set *(char*)0x40127c=0xeb
+  
+  tb vale 
+  set {char} 0x40120d=0xeb
+  set {char} 0x40127c=0xeb
+  
+  PROBLEMAS COMUNES: puede ocurrir que las ediciones no surgan efecto y además se bloqueen para futuros cambios.
+  Con reiniciar el gdb sirve
+  
+  
+  
+  
+  Para el editor de hexadecimal, hay q buscar las cosas con el buscador,
+  teniendo en cuenta que es little endian
+  
+
+
+
+
+
+
