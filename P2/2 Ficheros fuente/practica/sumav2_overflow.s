@@ -41,7 +41,7 @@ bucle:
 	add  (%rbx,%rdx,4), %eax	# suma = (lista[i]) + suma
 	inc   %rdx					# i++
 	cmp   %rdx,%rcx				# i == tam_lista ? iguales=true : iguales=false	
-	jne    bucle				# if iguales == true, PC = goto 37
+	jne    bucle				# if iguales == true, goto bucle
 
 	pop   %rdx					# Saca rdx
 	ret							# Devuelve suma
