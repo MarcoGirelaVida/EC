@@ -11,13 +11,13 @@
 ### reabrir ejecutable con permisos r/w
     file bomba
 ### comprobar las direcciones a cambiar
-    x/i *main+104
-    x/i *main+238
+    x/i *main+100
+    x/i *main+234
 ### realizar los cambios
-    set  {char} *(main+104)=0xeb
-    set  {char} *(main+238)=0xeb
+    set  {char} *(main+100)=0xeb
+    set  {char} *(main+234)=0xeb
 ### comprobar las instrucciones cambiadas
-    x/i *main+104
-    x/i *main+238
+    x/i *main+100
+    x/i *main+234
 ### salir para desbloquear el ejecutable
     quit

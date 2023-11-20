@@ -8,8 +8,8 @@
 #define SIZE 100
 #define TLIM 5
 
-char password[]="abracadabra\n";	// contraseÃ±a
-int  passcode  = 7777;			// pin
+char PASSWORD[]="abracadabra\n";	// contraseÃ±a
+int  PASSCODE  = 7777;			// pin
 
 void boom(void){
 	printf(	"\n"
@@ -38,22 +38,22 @@ int main(){
 
 	do	printf("\nIntroduce la contraseÃ±a: ");
 	while (	fgets(pw, SIZE, stdin) == NULL );
-	if    (	strncmp(pw,password,sizeof(password)) )
+	if    (	strncmp(pw,PASSWORD,sizeof(PASSWORD)) )
 	    boom();
 
 	gettimeofday(&tv2,NULL);
-	if    ( tv2.tv_sec - tv1.tv_sec > TLIM )
+	if    ( tv2.tv_sec - tv1.tv_sec > TIME_LIMIT )
 	    boom();
 
 	do  {	printf("\nIntroduce el pin: ");
 	 if ((n=scanf("%i",&pc))==0)
 		scanf("%*s")    ==1;         }
 	while (	n!=1 );
-	if    (	pc != passcode )
+	if    (	pc != PASSCODE )
 	    boom();
 
 	gettimeofday(&tv1,NULL);
-	if    ( tv1.tv_sec - tv2.tv_sec > TLIM )
+	if    ( tv1.tv_sec - tv2.tv_sec > TIME_LIMIT )
 	    boom();
 
 	defused();
