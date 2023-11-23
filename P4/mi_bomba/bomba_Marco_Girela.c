@@ -1,4 +1,4 @@
-// gcc -O2 bomba_Marco_Girela.c -o bomba_Marco_Girela
+// gcc -O2 bomba_Marco_Girela.c -o bomba_Marco_Girela -no-pie -fno-stack-protector -fno-reorder-blocks
 #undef  _FORTIFY_SOURCE
 #define _FORTIFY_SOURCE 0
 
@@ -6,13 +6,15 @@
 #include <stdlib.h>	// para exit()
 #include <string.h>	// para strncmp()
 #include <sys/time.h>	// para gettimeofday(), struct timeval
+#include <stdbool.h>
 
 /*----------------------------------------------------------*/
 // VARIABLES GLOBALES
 #define SIZE 10
 #define TIME_LIMIT 5
-char PASSWORD[]="teletubi\n";	// contraseña
-int  PASSCODE  = 4021;				// pin
+char PASSWORD[]="wjojwuei\n";	// contraseña es realmente "teletubi\n"
+char encriptada[SIZE];
+int  PASSCODE  = 2011;				// pin real es 4022
 
 /*----------------------------------------------------------*/
 // FUNCIONES
@@ -34,6 +36,70 @@ void defused(void){
 	exit(0);
 }
 
+bool esprimo(int n)
+{
+	int i;
+	for (i = 2; i < n; i++)
+		if (n % i == 0)
+			return false;
+	return true;
+}
+
+bool espar(int n)
+{
+	if (n % 2 == 0){
+		return true;
+	}
+	return false;
+}
+
+char * encriptar(char * constrasena)		// realmente el algoritmo puede dar lugar a que varias contraseñas sean correctas, pero bueno, mejor para el que quiera acertarla
+{
+	for (int i = 0; i < SIZE-2; i++)
+	{
+		if (espar((int) constrasena[i]))
+		{
+			//fprintf(stderr, "El caracter %d de la contraseña es: %c \n", i, constrasena[i]);
+			//fprintf(stderr, "Al encriptarlo, al ser par, se tranforma en: %c \n", (char) ((int)constrasena[i] + 3));
+			encriptada[i] = (char) ((int)constrasena[i] + 3);
+		}
+		else if (esprimo((int) constrasena[i]))
+		{
+			//fprintf(stderr, "El caracter %d de la contraseña es: %c \n", i, constrasena[i]);
+			//fprintf(stderr, "Al encriptarlo, al ser primo, se tranforma en: %c \n", (char) ((int)constrasena[i] + 5));
+			encriptada[i] = (char) ((int)constrasena[i] + 5);
+		}
+		else
+		{
+			//fprintf(stderr, "El caracter %d de la contraseña es: %c \n", i, constrasena[i]);
+			//fprintf(stderr, "Al encriptarlo, al no ser ni primo ni par, se tranforma en: %c \n", constrasena[i]);
+			encriptada[i] = constrasena[i];
+		}
+	}
+	encriptada[SIZE-2] = '\n';
+	encriptada[SIZE-1] = '\0';
+
+	return encriptada;
+}
+
+
+
+int funcion_confusa(int n){		// Se llama cuando el pin proporcinado es menor que el real
+	return n+2;
+}
+
+int funcion_confusaa(int n){		// Se llama cuando el pin proporcinado es igual que el real	
+	return n*8;
+}
+
+int funcion_confuusa(int n){		// Se llama cuando el pin proporcinado es menor que el real
+	return n*3;
+}
+
+int funcion_confuusaa(int n){		// Se llama cuando el pin proporcinado es menor que el real
+	return n+1;
+}
+
 /*----------------------------------------------------------*/
 // MAIN
 int main(){
@@ -42,13 +108,10 @@ int main(){
 	char input_password[SIZE];
 	int  input_passcode, n;
 
-	struct timeval instante_entrada, instante_salida;
-
 	/**********************************************************/
 	// CONTRASEÑA
-
-	// 1. Registra el instante de entrada
-	gettimeofday(&instante_entrada, NULL);		
+	//char * original_encriptada = encriptar("teletubi\n");
+	//printf("\n La contraseñao original encriptada es: %s\n", original_encriptada);
 
 	// 2. Lee el input del usuario
 	do
@@ -57,24 +120,15 @@ int main(){
 
 	} 	while (	clearerr(stdin), fgets(input_password, SIZE, stdin) == NULL );	
 	
+	char * input_password_encriptada = encriptar(input_password);
 
 	// 3. Si la contraseña introducida no coincide con la real explota
-	if    (	strncmp(input_password, PASSWORD, sizeof(PASSWORD)) )
+	if    (	strncmp(input_password_encriptada, PASSWORD, sizeof(PASSWORD)) )
 		boom();
 
+	printf("Enhorabuena, has acertado la contraseña\n");
 
-	// 4. Registra el intante de salida
-	gettimeofday(&instante_salida, NULL);
-
-	// 5. Si ha tardado demasiado en poner la contraseña explota
-	if    ( instante_salida.tv_sec - instante_entrada.tv_sec > TIME_LIMIT )	
-		boom();
-
-	/**********************************************************/
 	// PIN
-
-	// 1. Registra el instante de entrada
-	// gettimeofday(&instante_entrada, NULL);		
 
 	// 2. lee el input del usuario
 	do
@@ -89,21 +143,36 @@ int main(){
 	
 	}	while (	n != 1 );
 
-
+	int numero;
 	// 3. Si el pin introducido no coincide con el real explota
-	if    (	input_passcode != PASSCODE )
-		boom();
+	if    (	input_passcode < PASSCODE )				// input < 2011 < 4022		--> EXPLOTA
+		numero = funcion_confusa(input_passcode);
 
-	// (Atajo no muy bueno desde el punto de vista de la legibilidad)
-	// 4. Está registrando el segundo instante de salida (en la variable instante de entrada)
-	gettimeofday(&instante_entrada, NULL);
+	else
+	{
+		if (input_passcode > PASSCODE*3)			// input > 2011*3 > 4022	--> EXPLOTA
+			numero = funcion_confuusaa(input_passcode);	
 
-	// 5. Si ha tardado demasiado en poner el PIN explota
-	if    ( instante_entrada.tv_sec - instante_salida.tv_sec > TIME_LIMIT )
-		boom();
+		else if (input_passcode == PASSCODE)		// input == 2011 < 4022		--> EXPLOTA
+			numero = funcion_confuusa(input_passcode);
 
-	/**********************************************************/
+		else if (input_passcode == PASSCODE*2)		// input == 2011*2 == 4022	--> DEFUSED
+			numero = funcion_confusaa(input_passcode);
+													// input == (cualquier otra cosa) --> EXPLOTA
+		else
+			boom();
+	}
+
 	// DESACTIVACIÓN
 	// Si ha llegado hasta aquí sin explotar significa que ha sido desactivada
-	defused();
+	printf("\n El numero es: %d\n", numero);
+
+	if (numero == 32176){		// 4022 * 8
+		defused();
+	}
+	else{
+		boom();
+	}
+
+	return 0;
 }
