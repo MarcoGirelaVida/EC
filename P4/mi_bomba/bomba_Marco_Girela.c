@@ -1,4 +1,4 @@
-// gcc -O2 bomba_Marco_Girela.c -o bomba_Marco_Girela -no-pie -fno-stack-protector -fno-reorder-blocks
+// gcc -O2 bomba_Marco_Girela.c -o bomba_Marco_Girela -no-pie 
 #undef  _FORTIFY_SOURCE
 #define _FORTIFY_SOURCE 0
 
