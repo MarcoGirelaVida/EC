@@ -28,8 +28,9 @@ int main()
 
 			auto start = high_resolution_clock::now();
 
-			for (unsigned i = 0; i < bytes.size(); i += line)
-				completar aquí...
+			for (unsigned j = 0; j < line; j++)
+				for (unsigned i = 0; i < bytes.size(); i += line)
+					bytes[i]++;										// lo que hay que modificar
 
 			auto stop = high_resolution_clock::now();
 
